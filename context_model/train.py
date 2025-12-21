@@ -5,14 +5,14 @@ from sentence_transformers import SentenceTransformer
 from dataset import ContextDataset, LABELS
 from model import ContextClassifier
 
-# -------- Config --------
+
 DATA_PATH = "/media/chaitanyaparate/New Volume/Programming/Python/Deep_Learning/deskai/dataset/data.json"
 BATCH_SIZE = 8
 EPOCHS = 10
 LR = 1e-3
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# -------- Load dataset --------
+
 dataset = ContextDataset(DATA_PATH)
 
 train_size = int(0.8 * len(dataset))
@@ -22,20 +22,20 @@ train_ds, val_ds = random_split(dataset, [train_size, val_size])
 train_loader = DataLoader(train_ds, batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(val_ds, batch_size=BATCH_SIZE)
 
-# -------- Encoder --------
+
 encoder = SentenceTransformer("all-MiniLM-L6-v2")
 encoder.eval()
 for p in encoder.parameters():
     p.requires_grad = False
 
-# -------- Model --------
+
 model = ContextClassifier(embed_dim=384, num_classes=len(LABELS))
 model.to(DEVICE)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
-# -------- Training loop --------
+
 for epoch in range(EPOCHS):
     model.train()
     total_loss = 0
@@ -63,7 +63,6 @@ for epoch in range(EPOCHS):
 
     avg_loss = total_loss / len(train_loader)
 
-    # -------- Validation --------
     model.eval()
     correct = 0
     total = 0
@@ -86,6 +85,6 @@ for epoch in range(EPOCHS):
 
     print(f"Epoch {epoch+1}/{EPOCHS} | Loss: {avg_loss:.4f} | Val Acc: {acc:.3f}")
 
-# -------- Save model --------
+
 torch.save(model.state_dict(), "context_classifier.pt")
 print("Model saved as context_classifier.pt")

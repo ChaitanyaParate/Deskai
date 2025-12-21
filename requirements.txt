@@ -1,0 +1,6 @@
+python-xlib
+pytesseract
+opencv-python
+sentence-transformers
+torch
+numpy

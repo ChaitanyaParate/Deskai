@@ -5,8 +5,9 @@ from .model import ContextClassifier
 from context_model.dataset import LABELS
 from .type import ScreenContext
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-THRESHOLD = 0.55
+#DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "cpu"
+THRESHOLD = 0.65
 
 
 class ContextInferencer:
