@@ -1,4 +1,4 @@
-from intent.type import Intent
+from .type import Intent
 from context_model.type import ScreenContext
 
 ERROR_KEYWORDS = [

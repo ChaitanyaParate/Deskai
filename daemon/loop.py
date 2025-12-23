@@ -9,6 +9,16 @@ from ocr.postprocess import lines_to_text
 from context_model.infer import ContextInferencer
 from daemon.state import DaemonState
 
+from intent.router.router import route_intent
+from intent.executo.executor import execute_intent
+import sys
+import select
+
+from daemon.intent_worker import intent_worker, start_intent_worker, intent_queue, result_queue
+from queue import Empty
+
+from daemon.ipc import start_ipc_server
+
 MAX_TEXT_CHARS = 1000
 POLL_INTERVAL = 2.0
 STREAK_REQUIRED = 2
@@ -19,10 +29,43 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 def stable_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
+CMD_FIFO = "/tmp/deskai_cmd"
+
+if not os.path.exists(CMD_FIFO):
+    raise RuntimeError("FIFO /tmp/deskai_cmd does not exist")
+
+cmd_fd = os.open(CMD_FIFO, os.O_RDONLY | os.O_NONBLOCK)
+
+
+def get_user_command():
+    global cmd_fd
+
+    r, _, _ = select.select([cmd_fd], [], [], 0)
+    if not r:
+        return None
+
+    data = os.read(cmd_fd, 1024).decode().strip()
+
+    if not data:
+        # writer closed, reopen FIFO
+        os.close(cmd_fd)
+        cmd_fd = os.open(CMD_FIFO, os.O_RDONLY | os.O_NONBLOCK)
+        return None
+
+    return data
+def handle_command(cmd, state):
+    intent = route_intent(cmd, state.context, state.text)
+    result = execute_intent(intent, state.context)
+    if result and result["type"] == "text":
+        print(f"[deskai][intent:{intent.name}]")
+        print(result["content"])
+
+start_ipc_server()
 
 def run_daemon():
     inferencer = ContextInferencer()
     state = DaemonState()
+    start_intent_worker()
     last_process_time = 0.0
 
     while True:
@@ -88,6 +131,35 @@ def run_daemon():
             state.context = context
             state.last_text_hash = text_hash
             state.window_id = win["window_id"]
+
+        # ---- Check for user command ----
+        cmd = get_user_command()
+        
+        if cmd:
+            print(f"[deskai] received command: {cmd}")
+
+            intent = route_intent(
+                user_command=cmd,
+                context=state.context,
+                text=text
+            )
+
+            handle_command(cmd, state)
+            
+            print(f"[deskai] intent routed: {intent.name}")
+
+            intent_queue.put((intent, state.context))
+            print("[deskai] intent queued")
+
+        try:
+            result = result_queue.get_nowait()
+        except Empty:
+            result = None
+
+        if result:
+            print("[deskai][intent result]")
+            print(result.get("content"))
+
 
         # ---------- cleanup ----------
         del ocr_result
