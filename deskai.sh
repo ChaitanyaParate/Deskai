@@ -1,25 +1,16 @@
-#!/usr/bin/env bash
-set -e
+#!/usr/bin/env python3
+import sys
+import socket
 
-FIFO="/tmp/deskai_cmd"
+SOCKET_PATH = "/tmp/deskai.sock"
 
-if [[ ! -p "$FIFO" ]]; then
-  echo "deskai error: FIFO $FIFO does not exist"
-  exit 1
-fi
+if "--task" not in sys.argv:
+    print("Usage: deskai --task \"command\"")
+    sys.exit(1)
 
-if [[ "$1" != "--task" ]]; then
-  echo "usage: deskai --task \"your task here\""
-  exit 1
-fi
+cmd = sys.argv[sys.argv.index("--task") + 1]
 
-shift
-
-TASK="$*"
-
-if [[ -z "$TASK" ]]; then
-  echo "deskai error: task cannot be empty"
-  exit 1
-fi
-
-echo "$TASK" > "$FIFO"
+client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+client.connect(SOCKET_PATH)
+client.sendall(cmd.encode())
+client.close()

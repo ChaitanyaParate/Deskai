@@ -20,11 +20,14 @@ curl -fsSL https://ollama.com/install.sh | sh
 
 ollama pull mistral
 
-mkfifo /tmp/deskai_cmd
+if [[ ! -p /tmp/deskai_cmd ]]; then
+  mkfifo /tmp/deskai_cmd
+fi
 
 mkdir -p ~/.local/bin
-mv deskai ~/.local/bin/
+install -m 755 deskai.sh ~/.local/bin/deskai
 
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
 systemctl --user daemon-reload
 systemctl --user enable deskai

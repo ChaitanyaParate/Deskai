@@ -3,7 +3,7 @@ Description=DeskAI Desktop Context Daemon
 After=graphical-session.target
 
 [Service]
-ExecStart={{DESKAI_PATH}}/venv/bin/python {{DESKAI_PATH}}/main.py
+ExecStart={{DESKAI_PATH}}/desk/bin/python {{DESKAI_PATH}}/main.py
 WorkingDirectory={{DESKAI_PATH}}
 Restart=on-failure
 RestartSec=2
