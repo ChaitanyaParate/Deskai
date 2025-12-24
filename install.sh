@@ -16,7 +16,7 @@ mkdir -p ~/.config/systemd/user
 sed "s|{{DESKAI_PATH}}|$PWD|g" deskai.service \
   > ~/.config/systemd/user/deskai.service
 
-curl -fsSL https://ollama.com/install.sh | sh
+#curl -fsSL https://ollama.com/install.sh | sh
 
 ollama pull mistral
 

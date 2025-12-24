@@ -11,7 +11,7 @@ THRESHOLD = 0.65
 
 
 class ContextInferencer:
-    def __init__(self, model_path="/media/chaitanyaparate/New Volume/Programming/Python/Deep_Learning/deskai/context_model/context_classifier.pt"):
+    def __init__(self, model_path="/home/chaitanyaparate/Downloads/deskai/context_model/context_classifier.pt"):
         self.encoder = SentenceTransformer("all-MiniLM-L6-v2")
         self.encoder.eval()
 

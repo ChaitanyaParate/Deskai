@@ -1,6 +1,7 @@
 import time
 import hashlib
 import os
+from queue import Empty
 
 from capture.windows import get_window_under_cursor
 from capture.screen import capture_active_window
@@ -10,15 +11,10 @@ from context_model.infer import ContextInferencer
 from daemon.state import DaemonState
 
 from intent.router.router import route_intent
-from intent.executo.executor import execute_intent
-import sys
-import select
-
-from daemon.intent_worker import intent_worker, start_intent_worker, intent_queue, result_queue
-from queue import Empty
-
+from daemon.intent_worker import start_intent_worker, intent_queue, result_queue
 from daemon.ipc import start_ipc_server
 
+from intent.executo.executor import execute_intent
 MAX_TEXT_CHARS = 1000
 POLL_INTERVAL = 2.0
 STREAK_REQUIRED = 2
@@ -26,58 +22,70 @@ CONF_OVERRIDE = 0.85
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+state = DaemonState()
+
 def stable_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
-CMD_FIFO = "/tmp/deskai_cmd"
+# def handle_command(cmd: str):
+#     if not cmd:
+#         return
+#     if not state.context or not state.text:
+#         print("[deskai] command ignored (no stable context yet)")
+#         return
 
-if not os.path.exists(CMD_FIFO):
-    raise RuntimeError("FIFO /tmp/deskai_cmd does not exist")
+#     intent = route_intent(cmd, state.context, state.text)
+#     intent_queue.put((intent, state.context))
+#     print("[deskai] result queued", flush=True)
 
-cmd_fd = os.open(CMD_FIFO, os.O_RDONLY | os.O_NONBLOCK)
+#     print(f"[deskai] intent queued: {intent.name}", flush=True)
 
+# def handle_command(cmd):
+#     if state.context is None or state.text is None:
+#         return "Context not ready yet."
 
-def get_user_command():
-    global cmd_fd
+#     intent = route_intent(cmd, state.context, state.text)
+#     intent_queue.put((intent, state.context))
 
-    r, _, _ = select.select([cmd_fd], [], [], 0)
-    if not r:
-        return None
+#     try:
+#         result = result_queue.get(timeout=80)
+#     except Empty:
+#         return "Intent timed out."
 
-    data = os.read(cmd_fd, 1024).decode().strip()
+#     return result.get("content", "No output")
 
-    if not data:
-        # writer closed, reopen FIFO
-        os.close(cmd_fd)
-        cmd_fd = os.open(CMD_FIFO, os.O_RDONLY | os.O_NONBLOCK)
-        return None
-
-    return data
-def handle_command(cmd, state):
+def handle_command(cmd):
     intent = route_intent(cmd, state.context, state.text)
-    result = execute_intent(intent, state.context)
-    if result and result["type"] == "text":
-        print(f"[deskai][intent:{intent.name}]")
-        print(result["content"])
+    result = execute_intent(intent, state)
 
-start_ipc_server()
+    if result is None:
+        return "[deskai] No result"
+
+    if isinstance(result, dict):
+        return result.get("content", "")
+
+    return result
+
+
 
 def run_daemon():
+    
+    print("[deskai] run_daemon started", flush=True)
     inferencer = ContextInferencer()
-    state = DaemonState()
-    start_intent_worker()
+    #start_intent_worker()
+    start_ipc_server(handle_command)
+
+    time.sleep(0.3)
+
     last_process_time = 0.0
 
     while True:
+        
         win = get_window_under_cursor()
-        if not win:
+        if not win or win.get("pid") is None:
             time.sleep(POLL_INTERVAL)
             continue
 
-        if win.get("pid") is None:
-            time.sleep(POLL_INTERVAL)
-            continue
-        
         now = time.time()
 
         if win["window_id"] != state.last_window_id:
@@ -86,7 +94,6 @@ def run_daemon():
             time.sleep(0.2)
             continue
 
-        
         if now - last_process_time < POLL_INTERVAL:
             time.sleep(0.2)
             continue
@@ -101,13 +108,11 @@ def run_daemon():
         text = raw_text[:MAX_TEXT_CHARS]
         text_hash = stable_hash(text)
 
-        # ---------- prediction ----------
-        if text_hash == state.last_text_hash and state.context is not None:
+        if text_hash == state.last_text_hash and state.context:
             context = state.context
         else:
             context = inferencer.predict(text)
 
-        # ---------- hysteresis ----------
         if state.streak_label == context.label:
             state.streak_count += 1
         else:
@@ -119,52 +124,22 @@ def run_daemon():
             or context.confidence >= CONF_OVERRIDE
         )
 
-        # ---------- accept ----------
         if accept:
-            if state.context is None or state.context.label != context.label:
-                print(
-                    f"[deskai] {context.label} "
-                    f"({context.confidence:.2f}) | "
-                    f"window pid={win['pid']}"
-                )
+            if not state.context or state.context.label != context.label:
+                print(f"[deskai] {context.label} ({context.confidence:.2f})")
 
             state.context = context
+            state.text = text
             state.last_text_hash = text_hash
-            state.window_id = win["window_id"]
-
-        # ---- Check for user command ----
-        cmd = get_user_command()
-        
-        if cmd:
-            print(f"[deskai] received command: {cmd}")
-
-            intent = route_intent(
-                user_command=cmd,
-                context=state.context,
-                text=text
-            )
-
-            handle_command(cmd, state)
-            
-            print(f"[deskai] intent routed: {intent.name}")
-
-            intent_queue.put((intent, state.context))
-            print("[deskai] intent queued")
 
         try:
             result = result_queue.get_nowait()
-        except Empty:
-            result = None
-
-        if result:
             print("[deskai][intent result]")
             print(result.get("content"))
+        except Empty:
+            pass
 
-
-        # ---------- cleanup ----------
-        del ocr_result
-        del raw_text
-        del text
-
+        del ocr_result, raw_text, text
         last_process_time = now
         time.sleep(POLL_INTERVAL)
+
