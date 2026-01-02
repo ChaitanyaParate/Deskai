@@ -7,7 +7,7 @@ from capture.screen import capture_active_window
 from ocr.engine import run_ocr
 from ocr.postprocess import lines_to_text
 from context_model.infer import ContextInferencer
-from daemon.state import GlobalState
+from state import shared_data
 
 MAX_TEXT_CHARS = 1000
 POLL_INTERVAL = 2.0
@@ -25,7 +25,7 @@ def run_daemon():
     
     print("[deskai] run_daemon started", flush=True)
     inferencer = ContextInferencer()
-    state = GlobalState
+
     time.sleep(0.3)
 
     last_process_time = 0.0
@@ -39,11 +39,12 @@ def run_daemon():
 
         now = time.time()
 
-        if win["window_id"] != state.last_window_id:
-            state.last_window_id = win["window_id"]
-            state.last_window_time = now
-            time.sleep(0.2)
-            continue
+        with shared_data.lock:
+            if win["window_id"] != shared_data.last_window_id:
+                shared_data.last_window_id = win["window_id"]
+                shared_data.last_window_time = now
+                time.sleep(0.2)
+                continue
 
         if now - last_process_time < POLL_INTERVAL:
             time.sleep(0.2)
@@ -59,29 +60,31 @@ def run_daemon():
         text = raw_text[:MAX_TEXT_CHARS]
         text_hash = stable_hash(text)
 
-        if text_hash == state.last_text_hash and state.context:
-            context = state.context
-        else:
-            context = inferencer.predict(text)
+        with shared_data.lock:
 
-        if state.streak_label == context.label:
-            state.streak_count += 1
-        else:
-            state.streak_label = context.label
-            state.streak_count = 1
+            if text_hash == shared_data.last_text_hash and shared_data.context:
+                context = shared_data.context
+            else:
+                context = inferencer.predict(text)
 
-        accept = (
-            state.streak_count >= STREAK_REQUIRED
-            or context.confidence >= CONF_OVERRIDE
-        )
+            if shared_data.streak_label == context.label:
+                shared_data.streak_count += 1
+            else:
+                shared_data.streak_label = context.label
+                shared_data.streak_count = 1
 
-        if accept:
-            if not state.context or state.context.label != context.label:
-                print(f"[deskai] {context.label} ({context.confidence:.2f})")
+            accept = (
+                shared_data.streak_count >= STREAK_REQUIRED
+                or context.confidence >= CONF_OVERRIDE
+            )
 
-            state.context = context
-            state.text = text
-            state.last_text_hash = text_hash
+            if accept:
+                if not shared_data.context or shared_data.context.label != context.label:
+                    print(f"[deskai] {context.label} ({context.confidence:.2f})")
+
+                shared_data.context = context
+                shared_data.text = text
+                shared_data.last_text_hash = text_hash
 
 
         del ocr_result, raw_text, text
