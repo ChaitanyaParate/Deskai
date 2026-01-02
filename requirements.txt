@@ -5,3 +5,4 @@ sentence-transformers
 torch
 numpy
 openai
+fastapi[standard]
