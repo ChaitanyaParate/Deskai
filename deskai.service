@@ -1,12 +1,24 @@
 [Unit]
-Description=DeskAI Desktop Context Daemon
-After=graphical-session.target
+Description=DeskAI Background Service
+After=network.target ollama.service
 
 [Service]
-ExecStart={{DESKAI_PATH}}/desk/bin/python {{DESKAI_PATH}}/main.py
+Type=simple
+
+# IMPORTANT: absolute paths only
 WorkingDirectory={{DESKAI_PATH}}
-Restart=on-failure
-RestartSec=2
+ExecStart={{DESKAI_PATH}}/desk/bin/python {{DESKAI_PATH}}/main.py
+
+# Make sure ollama is found
+Environment=PATH=/usr/bin:/bin:/usr/local/bin
+
+Restart=always
+RestartSec=5
+
+# Logs go here:
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=default.target
+

@@ -44,3 +44,4 @@ def handle_explain_error(payload):
 
     for chunk in llm.generate_stream(prompt):
         yield chunk
+

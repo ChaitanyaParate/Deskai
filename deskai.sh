@@ -1,30 +1,8 @@
-#!/usr/bin/env python3
-import sys
-import socket
+#!/usr/bin/env bash
 
-SOCKET_PATH = "/tmp/deskai.sock"
+DESKAI_DIR="/home/chaitanyaparate/Downloads/deskai"
+PYTHON="$DESKAI_DIR/desk/bin/python"
+CLIENT="$DESKAI_DIR/client.py"
 
-if "--task" not in sys.argv:
-    print("Usage: deskai --task \"command\"")
-    sys.exit(1)
-
-cmd = sys.argv[sys.argv.index("--task") + 1]
-
-client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-client.connect(SOCKET_PATH)
-# client.sendall(cmd.encode())
-# response = client.recv(65536)
-# print(response.decode())
-# client.close()
-
-client.sendall(cmd.encode())
-client.settimeout(None)
-
-while True:
-    chunk = client.recv(4096)
-    if not chunk:
-        break
-    print(chunk.decode(), end="", flush=True)
-
-client.close()
+exec "$PYTHON" "$CLIENT" "$@"
 

@@ -6,6 +6,7 @@ from daemon.loop import run_daemon
 from daemon.llm_loop import llm_loop
 from llm.warmup import warmup_llm
 from state import shared_data
+from intent.executo.handlers.explain_error import handle_explain_error
 
 SOCKET_PATH = "/tmp/deskai.sock"
 
@@ -35,16 +36,25 @@ def socket_server():
                 context = shared_data.context.label if shared_data.context else None
             conn.sendall(f"value={value}, context={context}\n".encode())
 
-        else:
-            try:
-                value = int(command)
-                with shared_data.lock:
-                    shared_data.value = value
-                conn.sendall(f"value set to {value}\n".encode())
-            except ValueError:
-                conn.sendall(b"invalid command\n")
+        elif command == "stream":
+            conn.sendall(b"[deskai] streaming started\n")
 
-        conn.close()
+            with shared_data.lock:
+                text = shared_data.text
+
+            if not text:
+                conn.sendall(b"No text available\n")
+                conn.close()
+                return
+
+            try:
+                for chunk in handle_explain_error({"text": text}):
+                    conn.sendall(chunk.encode())
+                conn.sendall(b"\n[deskai] streaming complete\n")
+            except Exception as e:
+                conn.sendall(f"\n[deskai] error: {e}\n".encode())
+
+            conn.close()
 
 
 def main():
