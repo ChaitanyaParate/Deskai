@@ -53,6 +53,8 @@ mkdir -p ~/.config/systemd/user
 
 sed "s|{{DESKAI_PATH}}|$PROJECT_DIR|g" deskai.service \
   > ~/.config/systemd/user/deskai.service
+sed "s|{{DESKAI_PATH}}|$PROJECT_DIR|g" ollama.service \
+  > ~/.config/systemd/user/ollama.service
 
 echo "[deskai] Installing CLI wrapper..."
 
@@ -70,3 +72,4 @@ systemctl --user restart deskai.service
 
 echo "[deskai] Installation complete."
 echo "[deskai] Check logs with: journalctl --user -u deskai -f"
+

@@ -5,19 +5,22 @@ After=network.target ollama.service
 [Service]
 Type=simple
 
-# IMPORTANT: absolute paths only
-WorkingDirectory={{DESKAI_PATH}}
-ExecStart={{DESKAI_PATH}}/desk/bin/python {{DESKAI_PATH}}/main.py
+# CRITICAL
+WorkingDirectory=%h/Downloads/deskai
 
-# Make sure ollama is found
-Environment=PATH=/usr/bin:/bin:/usr/local/bin
+# Absolute python from venv
+ExecStart=%h/Downloads/deskai/desk/bin/python main.py
+
+# Environment is NOT inherited
+Environment=PATH=%h/Downloads/deskai/desk/bin:/usr/local/bin:/usr/bin
+Environment=HOME=%h
 
 Restart=always
-RestartSec=5
+RestartSec=3
 
-# Logs go here:
-StandardOutput=journal
-StandardError=journal
+# Avoid restart storms
+StartLimitIntervalSec=60
+StartLimitBurst=5
 
 [Install]
 WantedBy=default.target

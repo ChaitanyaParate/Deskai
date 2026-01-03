@@ -3,6 +3,9 @@ import os
 import threading
 import sys
 
+import subprocess
+import time
+
 from daemon.loop import run_daemon
 from state import shared_data
 from intent.router.router import route_intent
@@ -19,7 +22,7 @@ def socket_server():
     server.bind(SOCKET_PATH)
     server.listen(5)
 
-    print("[deskai] socket server running")
+    print("[deskai] socket server running", flush=True)
 
     while True:
         try:
@@ -66,13 +69,36 @@ def socket_server():
             print("[deskai] Exit")
             sys.exit(1)
             
+def start_ollama():
+    log = open("/tmp/ollama.log", "ab", buffering=0)
 
+    subprocess.Popen(
+        ["ollama", "serve"],
+        stdout=log,
+        stderr=log,
+        stdin=subprocess.DEVNULL,
+        start_new_session=True
+    )
+
+def ollama_running():
+    return subprocess.run(
+        ["pgrep", "-f", "ollama serve"],
+        stdout=subprocess.DEVNULL
+    ).returncode == 0
 
 def main():
     
     threading.Thread(target=run_daemon, daemon=True).start()
+    time.sleep(1)
+
+    if not ollama_running():
+        start_ollama()
     
     socket_server()
+
+
+
+
 
 
 if __name__ == "__main__":
