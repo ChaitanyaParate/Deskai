@@ -1,5 +1,5 @@
 import os
-
+# ---- Find Display server protocol ----
 def get_backend():
     if os.environ.get("WAYLAND_DISPLAY"):
         return "wayland"

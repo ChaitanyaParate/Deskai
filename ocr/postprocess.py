@@ -1,5 +1,7 @@
 from ocr.types import OCRLine, OCRResult
 
+# ------------ Functions to Organoze OCR Text -------------------
+
 def sort_lines(lines):
     return sorted(lines, key=lambda l: (l.bbox[1], l.bbox[0]))
 

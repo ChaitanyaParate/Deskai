@@ -1,25 +1,9 @@
-from llm.factory import get_llm
 
-_llm = None
-
-def _get_llm():
-    global _llm
-    if _llm is None:
-        _llm = get_llm()
-    return _llm
-
-
-def handle_explain_error(payload):
+# ------------ Create Prompt and pass it to LLM -------------------
+def handle_explain_error(payload, llm):
     print("[deskai] prompt initialised", flush=True)
-    text = payload["text"]
+    text = payload["text"][0]
 
-#     prompt = f"""
-# You are a debugging assistant.
-# Explain the following error in simple terms.
-# Suggest likely causes and fixes.
-
-# {text}
-# """
 
     prompt = f"""
     You are a debugging assistant.
@@ -40,7 +24,6 @@ def handle_explain_error(payload):
     Response:
     """
 
-    llm = _get_llm()
 
     for chunk in llm.generate_stream(prompt):
         yield chunk

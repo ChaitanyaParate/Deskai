@@ -1,23 +1,35 @@
-from intent.router.type import Intent
 from context_model.type import ScreenContext
 
 from .handlers.summarize import handle_summarize
 from .handlers.explain_error import handle_explain_error
 from .handlers.search import handle_search
 
+from llm.factory import get_llm
+# ------------ Deside Behavior -------------------
+_llm = None
 
-def execute_intent(intent: Intent, state: ScreenContext):
+def _get_llm():
+    global _llm
+    if _llm is None:
+        _llm = get_llm()
+    return _llm
+
+def execute_intent(intent, context):
     print(f"[deskai] worker executed")
-    if intent.name == "summarize":
-        return handle_summarize(intent.payload)
+    llm = _get_llm()
+    if intent == "summarize":
 
-    if intent.name == "explain_error":
+        for chunk in handle_summarize(context, llm):
+            yield chunk
+
+    if intent == "explain_error":
         
-        return handle_explain_error({
-            "text": state.text
-        })
+        for chunk in handle_explain_error(context, llm):
+            yield chunk
 
-    if intent.name == "search":
-        return handle_search(intent.payload)
+    if intent == "search":
+
+        for chunk in handle_search(context, llm):
+            yield chunk
 
     return None

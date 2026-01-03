@@ -3,7 +3,7 @@ import hashlib
 import os
 
 from capture.windows import get_window_under_cursor
-from capture.screen import capture_active_window
+from capture.screen import capture_window_under_cursor
 from ocr.engine import run_ocr
 from ocr.postprocess import lines_to_text
 from context_model.infer import ContextInferencer
@@ -20,6 +20,7 @@ def stable_hash(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
+# ---- Main OCR Loop ----
 
 def run_daemon():
     
@@ -50,7 +51,7 @@ def run_daemon():
             time.sleep(0.2)
             continue
 
-        capture = capture_active_window()
+        capture = capture_window_under_cursor()
         if not capture:
             time.sleep(POLL_INTERVAL)
             continue

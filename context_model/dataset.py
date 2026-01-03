@@ -11,7 +11,7 @@ LABELS = [
 
 LABEL_TO_ID = {label: i for i, label in enumerate(LABELS)}
 
-
+# ------------ Get Data -------------------
 class ContextDataset(Dataset):
     def __init__(self, json_path):
         with open(json_path) as f:

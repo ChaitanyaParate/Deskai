@@ -5,7 +5,9 @@ from Xlib import X
 from .windows import get_window_under_cursor, _dsp
 from .backend import get_backend
 
-def capture_active_window():
+# ---- Gets Image od window under cursor ----
+
+def capture_window_under_cursor():
 
     env = get_backend()
     if env == "x11":
@@ -45,7 +47,7 @@ def capture_active_window():
     return None
 
 if __name__ == "__main__":
-    data = capture_active_window()
+    data = capture_window_under_cursor()
 
     cv2.imshow("active window", data["image"])
     cv2.waitKey(0)

@@ -3,6 +3,7 @@ import pytesseract
 from collections import defaultdict
 from ocr.types import BBox, OCRLine, OCRResult, OCRWord
 
+# ------------ Final OCR Result -------------------
 
 def run_ocr(image, config="--oem 3 --psm 6", lang="eng") -> OCRResult:
     if image is None or image.ndim != 3:

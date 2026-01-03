@@ -2,7 +2,7 @@ import threading
 from typing import Optional
 from context_model.type import ScreenContext
 
-
+# ---- Shared Data ----
 class GlobalState:
     def __init__(self):
         self.lock = threading.Lock()

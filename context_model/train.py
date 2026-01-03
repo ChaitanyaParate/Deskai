@@ -5,6 +5,7 @@ from sentence_transformers import SentenceTransformer
 from dataset import ContextDataset, LABELS
 from model import ContextClassifier
 
+# ------------ Training loop -------------------
 
 DATA_PATH = "/media/chaitanyaparate/New Volume/Programming/Python/Deep_Learning/deskai/dataset/data.json"
 BATCH_SIZE = 8

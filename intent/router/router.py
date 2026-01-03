@@ -1,47 +1,28 @@
-from .type import Intent
-from context_model.type import ScreenContext
+# ------------ Checks Commands -------------------
 
-ERROR_KEYWORDS = [
-    "error", "exception", "traceback",
-    "failed", "not found", "segmentation fault"
-]
-
-def route_intent(
-    user_command: str,
-    context: ScreenContext,
-    text: str
-    ) -> Intent:
+def route_intent(user_command, context):
 
     cmd = user_command.lower().strip()
 
     # ---- No command ----
     if not cmd:
-        return Intent("noop", {})
+        return "Noop"
 
     # ---- Summarize ----
-    if any(k in cmd for k in ["summarize", "summary", "tl;dr"]):
-        return Intent(
-            "summarize",
-            {"text": text, "context": context.label}
-        )
-
-    # ---- Explain error ----
-    if (
-        context.label in ["terminal", "code_editor"]
-        and any(k in text.lower() for k in ERROR_KEYWORDS)
-        and any(k in cmd for k in ["explain", "why", "what happened"])
-    ):
-        return Intent(
-            "explain_error",
-            {"text": text}
-        )
-
+    elif cmd in ["summarize", "summary"]:
+        return "summarize"
+    
     # ---- Search ----
-    if any(k in cmd for k in ["search", "google", "find"]):
-        return Intent(
+    elif cmd in ["search", "google", "find"]:
+        return [
             "search",
             {"query": cmd.replace("search", "").strip()}
-        )
+        ]
+
+    # ---- Explain error ----
+    if (context.label in ["terminal", "code_editor"] and cmd in ["explain_error", "explain", "explain error", "error"]):
+        return "explain_error"
+
 
     # ---- Default ----
-    return Intent("noop", {})
+    return "Noop"

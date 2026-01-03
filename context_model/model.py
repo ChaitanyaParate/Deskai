@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-
+# ------------ FCLs -------------------
 class ContextClassifier(nn.Module):
     def __init__(self, embed_dim=384, num_classes=5):
         super().__init__()
