@@ -65,6 +65,7 @@ if ! echo "$PATH" | grep -q "$HOME/.local/bin"; then
   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 fi
 
+echo "$HOME/Downloads/deskai" > ~/.deskai_path
 
 systemctl --user daemon-reload
 systemctl --user enable deskai.service
