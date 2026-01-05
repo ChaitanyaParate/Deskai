@@ -53,7 +53,14 @@ DeskAI is different:
 It is meant to feel like a **system utility**, not an app.
 
 ---
+## What this project demonstrates
 
+- Daemon design
+- IPC
+- systemd
+- Streaming systems
+
+---
 ## Architecture
 
 DeskAI uses a **daemon–client model** with UNIX sockets for IPC.
