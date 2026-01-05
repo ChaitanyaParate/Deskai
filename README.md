@@ -1,6 +1,6 @@
 # DeskAI
 
-DeskAI is a **local-first desktop intelligence daemon** that continuously observes your active desktop context and allows you to interact with it using natural language via a lightweight CLI.  
+DeskAI is a **local-first desktop intelligence daemon** that continuously observes your active desktop context and allows you to interact with it using natural language via a lightweight CLI. 
 It runs fully **offline**, powered by **local LLMs through Ollama**, and is designed to behave like a background system service rather than a typical app.
 
 This project intentionally focuses on **systems-level engineering**: IPC, background services, streaming inference, and OS integration.
@@ -13,7 +13,6 @@ This project intentionally focuses on **systems-level engineering**: IPC, backgr
 - Architecture
 - Tech Stack
 - Core Concepts
-- Features
 - Installation
 - Usage
 - Services & Startup
@@ -55,15 +54,17 @@ It is meant to feel like a **system utility**, not an app.
 ---
 ## What this project demonstrates
 
-- Daemon design
-- IPC
-- systemd
-- Streaming systems
+- Design of long-running user-level Linux daemons
+- systemd user service configuration and lifecycle management
+- Client–daemon IPC using UNIX domain sockets
+- Token-level streaming pipelines with fault-tolerant client handling
+- Local-first system design with zero cloud dependencies
 
 ---
 ## Architecture
 
-DeskAI uses a **daemon–client model** with UNIX sockets for IPC.
+DeskAI uses a daemon–client architecture with UNIX domain sockets to decouple long-running system state from short-lived CLI invocations.
+
 
 ```
 User Command
@@ -77,7 +78,7 @@ DeskAI Daemon
    |
    | subprocess
    v
-Ollama LLM (phi3 / mistral)
+Local LLM Runtime (Ollama)
 ```
 
 ### Runtime Flow
@@ -97,9 +98,9 @@ Ollama LLM (phi3 / mistral)
 | Layer | Technology |
 |-----|------------|
 | Language | Python 3.10+ (tested on 3.10–3.12)|
+| Display Server | X11 |
 | LLM Runtime | Ollama |
 | Ollama | v0.1+ |
-| Models | phi3:mini (default) |
 | IPC | UNIX domain sockets |
 | Service Manager | systemd (user) |
 | Environment | Python venv |
@@ -125,18 +126,6 @@ No HTTP APIs, no telemetry, no cloud calls.
 
 ---
 
-## Features
-
-- Background daemon
-- Automatic startup on login
-- Local LLM inference
-- Streaming output
-- Intent-based command routing
-- CLI-first UX
-- No hardcoded paths after install
-
----
-
 ## Installation
 
 DeskAI is installed using **install.sh**, which configures everything correctly.
@@ -155,7 +144,6 @@ cd Deskai
 chmod +x install.sh
 ./install.sh
 ```
-Clone inside Downloads folder
 
 ### What install.sh Does
 
@@ -176,6 +164,7 @@ Clone inside Downloads folder
 Reads the current ScreenContext.
 
 ### Run a Task
+Commands demonstrate intent routing and streaming execution rather than end-user features.
 
 ```bash
 
@@ -228,6 +217,7 @@ They are enabled automatically and start on login.
 - Daemon never crashes on client failure
 - Restart handled by systemd
 - Streaming errors are logged, not fatal
+- Client lifecycle is fully decoupled from daemon state
 
 ---
 
@@ -261,7 +251,7 @@ deskai/
 │   ├── router/
 │   │    └── router.py
 │   │  
-│   └── executo/
+│   └── executor/
 │       ├── handlers/
 │       │   ├── explain_error.py
 │       │   ├── summarize.py
@@ -290,6 +280,8 @@ deskai/
 
 ## Development Notes
 
+- Cloud LLM clients exist but are currently unused and disabled; the system operates entirely in local-only mode.
+
 This project intentionally avoids:
 - Framework-heavy abstractions
 - Cloud dependencies
@@ -304,36 +296,20 @@ It focuses on:
 
 ## Known Limitations
 
-- Linux using X11 only
+- Linux systems using X11 only
 - Requires systemd user sessions
 - LLM latency depends on model size
-- No sandboxing between intents yet
+- No sandboxing between intents
 - No GUI feedback
 
 
 ## Future Work
 
-- **Cloud LLM Integration**
-  - Optional support for hosted LLM APIs such as OpenAI (ChatGPT), Azure OpenAI, Anthropic, and Gemini.
-  - Runtime model selection between local (Ollama) and cloud providers based on latency, cost, or task complexity.
-  - Secure API key management via environment variables or OS keyrings.
-
-- **GUI Overlay**
-  - Lightweight desktop overlay for displaying responses, context state, and streaming outputs.
-  - Configurable hotkeys for invoking tasks without terminal interaction.
-
-- **Plugin-Based Intent System**
-  - Pluggable intent architecture allowing third-party extensions without modifying core logic.
-  - Dynamic intent discovery and registration at runtime.
-
-- **Multi-Model Routing**
-  - Automatic routing between vision, text, and code-specialized models.
-  - Confidence-based or cost-aware model selection.
-
-- **Persistent Memory**
-  - Long-term memory storage for user preferences, frequent workflows, and historical context.
-  - Optional vector database backend for semantic recall across sessions.
-
+- Optional cloud-backed inference path integrated behind the existing LLM runtime interface
+- Lightweight GUI overlay as an alternate client to the existing daemon
+- Plugin-based intent system with explicit isolation boundaries
+- Multi-model routing within the daemon for heterogeneous workloads
+- Persistent state storage decoupled from daemon process lifetime
 
 ## License
 
@@ -344,7 +320,7 @@ MIT License
 ## Author
 
 Chaitanya Parate  
-Built as a systems-level learning project focused on:
+Built as a systems-level project focused on:
 
 - systemd
 - Linux services
