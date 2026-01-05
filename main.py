@@ -9,7 +9,7 @@ import time
 from daemon.loop import run_daemon
 from state import shared_data
 from intent.router.router import route_intent
-from intent.executo.executor import execute_intent
+from intent.executor.executor import execute_intent
 
 SOCKET_PATH = os.path.expanduser("~/.local/share/deskai/deskai.sock")
 
