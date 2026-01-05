@@ -11,6 +11,10 @@ rsync -a --delete . "$INSTALL_DIR"
 
 cd "$INSTALL_DIR"
 
+sudo apt install git-lfs
+git lfs install
+git clone https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+
 echo "[deskai] Creating virtual environment..."
 python3 -m venv venv
 

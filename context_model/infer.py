@@ -4,6 +4,10 @@ from sentence_transformers import SentenceTransformer
 from .model import ContextClassifier
 from context_model.dataset import LABELS
 from .type import ScreenContext
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = BASE_DIR / "context_classifier.pt"
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -11,8 +15,11 @@ THRESHOLD = 0.65
 
 # ------------ Get Predictions -------------------
 class ContextInferencer:
-    def __init__(self, model_path="/home/chaitanyaparate/Downloads/deskai/context_model/context_classifier.pt"):
-        self.encoder = SentenceTransformer("all-MiniLM-L6-v2")
+    def __init__(self, model_path=MODEL_PATH):
+        self.encoder = SentenceTransformer(
+            "./all-MiniLM-L6-v2",
+            device=DEVICE
+        )
         self.encoder.eval()
 
         self.model = ContextClassifier(
