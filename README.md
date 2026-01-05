@@ -144,7 +144,7 @@ DeskAI is installed using **install.sh**, which configures everything correctly.
 
 ```bash
 git clone https://github.com/ChaitanyaParate/Deskai.git
-cd deskai
+cd Deskai
 chmod +x install.sh
 ./install.sh
 ```
