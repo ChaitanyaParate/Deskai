@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-DESKAI_DIR="$(cat "$HOME/.deskai_path")"
+DESKAI_DIR="$HOME/.local/share/deskai"
 
-PYTHON="$DESKAI_DIR/desk/bin/python"
-CLIENT="$DESKAI_DIR/client.py"
-
-exec "$PYTHON" "$CLIENT" "$@"
+exec "$DESKAI_DIR/venv/bin/python" \
+     "$DESKAI_DIR/client.py" "$@"

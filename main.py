@@ -11,10 +11,13 @@ from state import shared_data
 from intent.router.router import route_intent
 from intent.executo.executor import execute_intent
 
-SOCKET_PATH = "/tmp/deskai.sock"
+SOCKET_PATH = os.path.expanduser("~/.local/share/deskai/deskai.sock")
 
 
 def socket_server():
+    socket_dir = os.path.dirname(SOCKET_PATH)
+    os.makedirs(socket_dir, exist_ok=True)
+
     if os.path.exists(SOCKET_PATH):
         os.remove(SOCKET_PATH)
 
@@ -23,6 +26,7 @@ def socket_server():
     server.listen(5)
 
     print("[deskai] socket server running", flush=True)
+
 
     while True:
         try:

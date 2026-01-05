@@ -1,27 +1,13 @@
 [Unit]
-Description=DeskAI Background Service
+Description=DeskAI Service
 After=network.target ollama.service
 
 [Service]
 Type=simple
-
-# CRITICAL
-WorkingDirectory=%h/Downloads/deskai
-
-# Absolute python from venv
-ExecStart=%h/Downloads/deskai/desk/bin/python main.py
-
-# Environment is NOT inherited
-Environment=PATH=%h/Downloads/deskai/desk/bin:/usr/local/bin:/usr/bin
-Environment=HOME=%h
-
+WorkingDirectory={{DESKAI_PATH}}
+ExecStart={{DESKAI_PATH}}/venv/bin/python {{DESKAI_PATH}}/main.py
 Restart=always
-RestartSec=3
-
-# Avoid restart storms
-StartLimitIntervalSec=60
-StartLimitBurst=5
+RestartSec=5
 
 [Install]
 WantedBy=default.target
-

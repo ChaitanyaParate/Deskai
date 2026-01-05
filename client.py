@@ -1,7 +1,8 @@
 import socket
 import sys
+import os
 
-SOCKET_PATH = "/tmp/deskai.sock"
+SOCKET_PATH = os.path.expanduser("~/.local/share/deskai/deskai.sock")
 # ---- Clint Command Execution ----
 def stream(task):
     
